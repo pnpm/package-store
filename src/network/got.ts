@@ -77,7 +77,8 @@ export default (
     registry?: string,
     onStart?: () => void,
     onProgress?: (downloaded: number, totalSize: number) => void,
-    integrity?: string
+    integrity?: string,
+    generatePackageIntegrity: boolean,
   }): Promise<{}> {
     return limit(async () => {
       await mkdirp(path.dirname(saveto))
@@ -119,7 +120,9 @@ export default (
 
           Promise.all([
             opts.integrity && ssri.checkStream(res, opts.integrity),
-            unpackStream.local(res, opts.unpackTo)
+            unpackStream.local(res, opts.unpackTo, {
+              generateIntegrity: opts.generatePackageIntegrity,
+            })
           ])
           .then(vals => resolve(vals[1]))
           .catch(reject)

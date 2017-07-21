@@ -25,6 +25,7 @@ import untouched from './pkgIsUntouched'
 import symlinkDir = require('symlink-dir')
 import * as unpackStream from 'unpack-stream'
 import renameOverwrite = require('rename-overwrite')
+import loadJsonFile = require('load-json-file')
 
 export type PackageContentInfo = {
   isNew: boolean,
@@ -67,6 +68,7 @@ export default async function fetch (
     loggedPkg: LoggedPkg,
     offline: boolean,
     storeIndex: Store,
+    verifyStoreIntegrity: boolean,
   }
 ): Promise<FetchedPackage> {
   try {
@@ -122,6 +124,7 @@ export default async function fetch (
         offline: options.offline,
         pkg,
         storeIndex: options.storeIndex,
+        verifyStoreIntegrity: options.verifyStoreIntegrity,
       })
     }
 
@@ -150,6 +153,7 @@ function fetchToStore (opts: {
   offline: boolean,
   pkg?: Package,
   storeIndex: Store,
+  verifyStoreIntegrity: boolean,
 }): {
   fetchingFiles: Promise<PackageContentInfo>,
   fetchingPkg: Promise<Package>,
@@ -184,7 +188,9 @@ function fetchToStore (opts: {
 
       if (targetExists) {
         // if target exists and it wasn't modified, then no need to refetch it
-        const satisfiedIntegrity = await untouched(linkToUnpacked)
+        const satisfiedIntegrity = opts.verifyStoreIntegrity
+          ? await untouched(linkToUnpacked)
+          : await loadJsonFile(path.join(path.dirname(linkToUnpacked), 'integrity.json'))
         if (satisfiedIntegrity) {
           logStatus({
             status: 'found_in_store',
@@ -212,10 +218,10 @@ function fetchToStore (opts: {
 
       await rimraf(targetStage)
 
-      let dirIntegrity: {} = {}
+      let packageIndex: {} = {}
       await Promise.all([
         async function () {
-          dirIntegrity = await fetchResolution(opts.resolution, targetStage, {
+          packageIndex = await fetchResolution(opts.resolution, targetStage, {
             got: opts.got,
             pkgId: opts.pkgId,
             storePath: opts.storePath,
@@ -234,7 +240,10 @@ function fetchToStore (opts: {
       // fetchingFilse shouldn't care about when this is saved at all
       if (!targetExists) {
         (async function () {
-          writeJsonFile(path.join(target, 'integrity.json'), await (<unpackStream.Index>dirIntegrity).integrityPromise, {indent: null})
+          const integrity = opts.verifyStoreIntegrity
+            ? await (<unpackStream.Index>packageIndex).integrityPromise
+            : await (<unpackStream.Index>packageIndex).headers
+          writeJsonFile(path.join(target, 'integrity.json'), integrity, {indent: null})
           calculatingIntegrity.resolve(undefined)
         })()
       } else {
@@ -259,7 +268,7 @@ function fetchToStore (opts: {
 
       fetchingFiles.resolve({
         isNew: true,
-        index: (<unpackStream.Index>dirIntegrity).headers,
+        index: (<unpackStream.Index>packageIndex).headers,
       })
     } catch (err) {
       fetchingFiles.reject(err)
