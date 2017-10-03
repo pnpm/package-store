@@ -72,6 +72,7 @@ export default async function fetch (
     storeIndex: Store,
     downloadPriority: number,
     verifyStoreIntegrity: boolean,
+    dryRun: boolean,
   }
 ): Promise<FetchedPackage> {
   try {
@@ -88,6 +89,7 @@ export default async function fetch (
         metaCache: options.metaCache,
         offline: options.offline,
         downloadPriority: options.downloadPriority,
+        dryRun: options.dryRun,
       })
       // keep the shrinkwrap resolution when possible
       // to keep the original shasum
@@ -117,7 +119,7 @@ export default async function fetch (
     const targetRelative = pkgIdToFilename(id)
     const target = path.join(options.storePath, targetRelative)
 
-    if (!options.fetchingLocker[id]) {
+    if (!options.fetchingLocker[id] && !options.dryRun) {
       options.fetchingLocker[id] = fetchToStore({
         target,
         targetRelative,

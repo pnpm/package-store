@@ -95,6 +95,7 @@ export type ResolveOptions = {
   prefix: string,
   offline: boolean,
   downloadPriority: number,
+  dryRun: boolean,
 }
 
 /**

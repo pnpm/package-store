@@ -39,6 +39,7 @@ export default async function loadPkgMetaNonCached (
     offline: boolean,
     registry: string,
     downloadPriority: number,
+    dryRun: boolean,
   }
 ): Promise<PackageMeta> {
   opts = opts || {}
@@ -72,7 +73,9 @@ export default async function loadPkgMetaNonCached (
     const meta = await fromRegistry(opts.got, spec, opts.registry, opts.downloadPriority)
     // only save meta to cache, when it is fresh
     opts.metaCache.set(spec.name, meta)
-    limit(() => saveMeta(pkgMirror, meta))
+    if (!opts.dryRun) {
+      limit(() => saveMeta(pkgMirror, meta))
+    }
     return meta
   } catch (err) {
     const meta = await loadMeta(opts.storePath)

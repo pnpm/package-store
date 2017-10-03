@@ -36,6 +36,7 @@ export default async function resolveNpm (spec: PackageSpec, opts: ResolveOption
       metaCache: opts.metaCache,
       offline: opts.offline,
       downloadPriority: opts.downloadPriority,
+      dryRun: opts.dryRun,
     })
     const correctPkg = pickVersion(meta, spec)
     if (!correctPkg) {
