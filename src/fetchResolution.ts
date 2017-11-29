@@ -20,10 +20,18 @@ export type IgnoreFunction = (filename: string) => boolean
 export interface FetchOptions {
   cachedTarballLocation: string,
   pkgId: string,
-  got: Got,
   offline: boolean,
   prefix: string,
   ignore?: IgnoreFunction,
+  download (url: string, saveto: string, opts: {
+    unpackTo: string,
+    registry?: string,
+    onStart?: (totalSize: number | null, attempt: number) => void,
+    onProgress?: (downloaded: number) => void,
+    ignore?: (filename: string) => boolean,
+    integrity?: string
+    generatePackageIntegrity?: boolean,
+  }): Promise<{}>,
 }
 
 export interface PackageDist {
@@ -104,7 +112,7 @@ export async function fetchFromRemoteTarball (dir: string, dist: PackageDist, op
     if (opts.offline) {
       throw new PnpmError('NO_OFFLINE_TARBALL', `Could not find ${opts.cachedTarballLocation} in local registry mirror`)
     }
-    return await opts.got.download(dist.tarball, opts.cachedTarballLocation, {
+    return await opts.download(dist.tarball, opts.cachedTarballLocation, {
       ignore: opts.ignore,
       integrity: dist.integrity,
       onProgress: (downloaded) => {

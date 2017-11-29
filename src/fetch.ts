@@ -175,7 +175,7 @@ async function fetch (
 
     if (!options.fetchingLocker[id]) {
       options.fetchingLocker[id] = fetchToStore({
-        got,
+        download: got.download,
         ignore: options.ignore,
         offline: options.offline,
         pkg,
@@ -210,7 +210,6 @@ async function fetch (
 
 function fetchToStore (opts: {
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
-  got: Got,
   offline: boolean,
   pkg?: PackageJson,
   pkgId: string,
@@ -222,6 +221,15 @@ function fetchToStore (opts: {
   storeIndex: Store,
   verifyStoreIntegrity: boolean,
   ignore?: IgnoreFunction,
+  download (url: string, saveto: string, opts: {
+    unpackTo: string,
+    registry?: string,
+    onStart?: (totalSize: number | null, attempt: number) => void,
+    onProgress?: (downloaded: number) => void,
+    ignore?: (filename: string) => boolean,
+    integrity?: string
+    generatePackageIntegrity?: boolean,
+  }): Promise<{}>,
 }): {
   fetchingFiles: Promise<PackageContentInfo>,
   fetchingPkg: Promise<PackageJson>,
@@ -297,7 +305,7 @@ function fetchToStore (opts: {
 
           packageIndex = await opts.requestsQueue.add(() => fetchResolution(opts.resolution, targetStage, {
             cachedTarballLocation: path.join(opts.storePath, opts.pkgId, 'packed.tgz'),
-            got: opts.got,
+            download: opts.download,
             ignore: opts.ignore,
             offline: opts.offline,
             pkgId: opts.pkgId,
