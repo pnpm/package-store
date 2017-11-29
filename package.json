@@ -19,6 +19,7 @@
     "@pnpm/logger": "^1.0.0"
   },
   "dependencies": {
+    "@pnpm/git-fetcher": "^0.1.0",
     "@pnpm/git-resolver": "^0.1.0",
     "@pnpm/local-resolver": "^0.1.0",
     "@pnpm/npm-resolver": "^0.1.0",

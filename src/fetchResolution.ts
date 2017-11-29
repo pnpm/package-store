@@ -1,10 +1,8 @@
+import fetchFromGit from '@pnpm/git-fetcher'
 import logger from '@pnpm/logger'
-import dint = require('dint')
-import execa = require('execa')
 import {IncomingMessage} from 'http'
 import fs = require('mz/fs')
 import path = require('path')
-import rimraf = require('rimraf-then')
 import * as unpackStream from 'unpack-stream'
 import {PnpmError} from './errorTypes'
 import {progressLogger} from './loggers'
@@ -56,37 +54,12 @@ export default async function fetchResolution (
       return await fetchFromTarball(target, dist, opts) as unpackStream.Index
 
     case 'git':
-      return await clone(resolution.repo, resolution.commit, target)
+      return await fetchFromGit(resolution, target)
 
     default: {
       throw new Error(`Fetching for dependency type "${resolution.type}" is not supported`)
     }
   }
-}
-
-/**
- * clone a git repository.
- */
-async function clone (repo: string, commitId: string, dest: string) {
-  await execGit(['clone', repo, dest])
-  await execGit(['checkout', commitId], {cwd: dest})
-  // removing /.git to make directory integrity calculation faster
-  await rimraf(path.join(dest, '.git'))
-  const dirIntegrity = await dint.from(dest)
-  return {
-    headers: dirIntegrity,
-    integrityPromise: Promise.resolve(dirIntegrity),
-  }
-}
-
-function prefixGitArgs (): string[] {
-  return process.platform === 'win32' ? ['-c', 'core.longpaths=true'] : []
-}
-
-function execGit (args: string[], opts?: object) {
-  gitLogger.debug(`executing git with args ${args}`)
-  const fullArgs = prefixGitArgs().concat(args || [])
-  return execa('git', fullArgs, opts)
 }
 
 export function fetchFromTarball (dir: string, dist: PackageDist, opts: FetchOptions) {
