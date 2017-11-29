@@ -21,7 +21,7 @@ import {fromDir as safeReadPkgFromDir} from './fs/safeReadPkg'
 import {Store} from './fs/storeController'
 import {LoggedPkg, progressLogger} from './loggers'
 import memoize, {MemoizedFunc} from './memoize'
-import {Got} from './network/got'
+import createGot, {Got} from './network/got'
 import untouched from './pkgIsUntouched'
 import resolvePkg, {
   DirectoryResolution,
@@ -56,17 +56,49 @@ export type FetchedPackage = {
   normalizedPref?: string,
 }
 
-export default function createFetcher (networkConcurrency: number = 16) {
+export default function createFetcher (
+  opts: {
+    rawNpmConfig: object & { registry?: string },
+    alwaysAuth: boolean,
+    registry: string,
+    networkConcurrency: number,
+    proxy?: {
+      http?: string,
+      https?: string,
+      localAddress?: string,
+    },
+    ssl?: {
+      certificate?: string,
+      key?: string,
+      ca?: string,
+      strict?: boolean,
+    },
+    retry?: {
+      count?: number,
+      factor?: number,
+      minTimeout?: number,
+      maxTimeout?: number,
+      randomize?: boolean,
+    },
+    userAgent?: string,
+  },
+) {
+  opts = opts || {}
+  const networkConcurrency = opts.networkConcurrency || 16
   const requestsQueue = new PQueue({
     concurrency: networkConcurrency,
   })
   requestsQueue['counter'] = 0 // tslint:disable-line
   requestsQueue['concurrency'] = networkConcurrency // tslint:disable-line
-  return fetch.bind(null, requestsQueue)
+
+  const got = createGot(opts)
+
+  return fetch.bind(null, requestsQueue, got)
 }
 
 async function fetch (
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
+  got: Got,
   wantedDependency: {
     alias?: string,
     pref: string,
@@ -80,7 +112,6 @@ async function fetch (
         fetchingPkg: Promise<PackageJson>,
       },
     },
-    got: Got,
     ignore?: IgnoreFunction,
     loggedPkg: LoggedPkg,
     metaCache: Map<string, PackageMeta>,
@@ -103,7 +134,7 @@ async function fetch (
     let pkgId = options.pkgId
     if (!resolution || options.update) {
       const resolveResult = await requestsQueue.add<ResolveResult>(() => resolvePkg(wantedDependency, {
-        getJson: options.got.getJSON,
+        getJson: got.getJSON,
         loggedPkg: options.loggedPkg,
         metaCache: options.metaCache,
         offline: options.offline,
@@ -144,7 +175,7 @@ async function fetch (
 
     if (!options.fetchingLocker[id]) {
       options.fetchingLocker[id] = fetchToStore({
-        got: options.got,
+        got,
         ignore: options.ignore,
         offline: options.offline,
         pkg,

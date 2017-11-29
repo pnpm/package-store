@@ -2,12 +2,16 @@ import test = require('tape')
 import nock = require('nock')
 import createGot, {NpmRegistryClient} from 'package-store/lib/network/got'
 import path = require('path')
-import RegClient = require('npm-registry-client')
 
 const tmpDir = path.join(__dirname, '..', '..', '.tmp')
 const tarballPath = path.join(__dirname, '..', 'tars', 'babel-helper-hoist-variables-6.24.1.tgz')
 const tarballSize = 1279
 const tarballIntegrity = 'sha1-HssnaJydJVE+rbyZFKc/VAi+enY='
+const RETRY = {
+  count: 1,
+  minTimeout: 0,
+  maxTimeout: 100,
+}
 
 test('fail when tarball size does not match content-length', async t => {
   nock('http://example.com')
@@ -17,13 +21,11 @@ test('fail when tarball size does not match content-length', async t => {
       'Content-Length': (1024 * 1024).toString(),
     })
 
-  const client: NpmRegistryClient = new RegClient()
-  const got = createGot(client, {
-    networkConcurrency: 1,
+  const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
     rawNpmConfig: {},
-    retries: 1,
+    retry: RETRY,
   })
 
   try {
@@ -55,13 +57,11 @@ test('retry when tarball size does not match content-length', async t => {
       'Content-Length': tarballSize.toString(),
     })
 
-  const client: NpmRegistryClient = new RegClient()
-  const got = createGot(client, {
-    networkConcurrency: 1,
+  const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
     rawNpmConfig: {},
-    retries: 1,
+    retry: RETRY,
   })
 
   await got.download('http://example.com/foo.tgz', path.join(tmpDir, 'foo.tgz'), {
@@ -79,13 +79,11 @@ test('fail when integrity check fails two times in a row', async t => {
       'Content-Length': '1194',
     })
 
-  const client: NpmRegistryClient = new RegClient()
-  const got = createGot(client, {
-    networkConcurrency: 1,
+  const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
     rawNpmConfig: {},
-    retries: 1,
+    retry: RETRY,
   })
 
   try {
@@ -117,13 +115,11 @@ test('retry when integrity check fails', async t => {
       'Content-Length': tarballSize.toString(),
     })
 
-  const client: NpmRegistryClient = new RegClient()
-  const got = createGot(client, {
-    networkConcurrency: 1,
+  const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
     rawNpmConfig: {},
-    retries: 1,
+    retry: RETRY,
   })
 
   const params: any = []

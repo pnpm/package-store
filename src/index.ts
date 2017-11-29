@@ -2,7 +2,6 @@ import getRegistryName = require('encode-registry') // TODO: remove this. BREAKI
 import createFetcher, {FetchedPackage, PackageContentInfo} from './fetch'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {read, save, Store} from './fs/storeController'
-import createGot, {Got} from './network/got'
 import pkgIsUntouched from './pkgIsUntouched'
 import resolve, {
   DirectoryResolution,
@@ -24,8 +23,6 @@ export {
   read,
   save,
   getRegistryName,
-  createGot,
-  Got,
   pkgIsUntouched,
   resolveStore,
 }

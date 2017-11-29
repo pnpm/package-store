@@ -1,9 +1,11 @@
+import logger from '@pnpm/logger'
 import getCredentialsByURI = require('credentials-by-uri')
 import crypto = require('crypto')
 import createWriteStreamAtomic = require('fs-write-stream-atomic')
 import {IncomingMessage} from 'http'
 import mkdirp = require('mkdirp-promise')
 import normalizeRegistryUrl = require('normalize-registry-url')
+import RegClient = require('npm-registry-client')
 import pLimit = require('p-limit')
 import path = require('path')
 import retry = require('retry')
@@ -45,26 +47,43 @@ export interface NpmRegistryClient {
 }
 
 export default (
-  client: NpmRegistryClient,
   gotOpts: {
     rawNpmConfig: object & { registry?: string },
     alwaysAuth: boolean,
     registry: string,
-    retries?: number,
-    factor?: number,
-    minTimeout?: number,
-    maxTimeout?: number,
-    randomize?: boolean,
+    proxy?: {
+      http?: string,
+      https?: string,
+      localAddress?: string,
+    },
+    ssl?: {
+      certificate?: string,
+      key?: string,
+      ca?: string,
+      strict?: boolean,
+    },
+    retry?: {
+      count?: number,
+      factor?: number,
+      minTimeout?: number,
+      maxTimeout?: number,
+      randomize?: boolean,
+    },
+    userAgent?: string,
   },
 ): Got => {
+  const registryLog = logger('registry')
+  const client = new RegClient({
+    ...gotOpts,
+    log: {
+      ...registryLog,
+      http: registryLog.debug.bind(null, 'http'),
+      verbose: registryLog.debug.bind(null, 'http'),
+    },
+  })
+
   gotOpts.rawNpmConfig.registry = normalizeRegistryUrl(gotOpts.rawNpmConfig.registry || gotOpts.registry)
-  const retryOpts = {
-    factor: gotOpts.factor,
-    maxTimeout: gotOpts.maxTimeout,
-    minTimeout: gotOpts.minTimeout,
-    randomize: gotOpts.randomize,
-    retries: gotOpts.retries,
-  }
+  const retryOpts = gotOpts.retry
 
   const rawNpmConfig = gotOpts.rawNpmConfig || {}
 
