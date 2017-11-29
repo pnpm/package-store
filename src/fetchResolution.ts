@@ -18,9 +18,9 @@ const fetchLogger = logger('fetch')
 export type IgnoreFunction = (filename: string) => boolean
 
 export interface FetchOptions {
+  cachedTarballLocation: string,
   pkgId: string,
   got: Got,
-  storePath: string,
   offline: boolean,
   prefix: string,
   ignore?: IgnoreFunction,
@@ -91,11 +91,10 @@ export function fetchFromTarball (dir: string, dist: PackageDist, opts: FetchOpt
 }
 
 export async function fetchFromRemoteTarball (dir: string, dist: PackageDist, opts: FetchOptions) {
-  const localTarballPath = path.join(opts.storePath, opts.pkgId, 'packed.tgz')
   try {
     const index = await fetchFromLocalTarball(dir, {
       integrity: dist.integrity,
-      tarball: localTarballPath,
+      tarball: opts.cachedTarballLocation,
     }, opts.ignore)
     fetchLogger.debug(`finish ${dist.integrity} ${dist.tarball}`)
     return index
@@ -103,9 +102,9 @@ export async function fetchFromRemoteTarball (dir: string, dist: PackageDist, op
     if (err.code !== 'ENOENT') throw err
 
     if (opts.offline) {
-      throw new PnpmError('NO_OFFLINE_TARBALL', `Could not find ${localTarballPath} in local registry mirror ${opts.storePath}`)
+      throw new PnpmError('NO_OFFLINE_TARBALL', `Could not find ${opts.cachedTarballLocation} in local registry mirror`)
     }
-    return await opts.got.download(dist.tarball, localTarballPath, {
+    return await opts.got.download(dist.tarball, opts.cachedTarballLocation, {
       ignore: opts.ignore,
       integrity: dist.integrity,
       onProgress: (downloaded) => {

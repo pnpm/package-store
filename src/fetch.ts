@@ -296,12 +296,12 @@ function fetchToStore (opts: {
           const priority = (++opts.requestsQueue['counter'] % opts.requestsQueue['concurrency'] === 0 ? -1 : 1) * 1000 // tslint:disable-line
 
           packageIndex = await opts.requestsQueue.add(() => fetchResolution(opts.resolution, targetStage, {
+            cachedTarballLocation: path.join(opts.storePath, opts.pkgId, 'packed.tgz'),
             got: opts.got,
             ignore: opts.ignore,
             offline: opts.offline,
             pkgId: opts.pkgId,
             prefix: opts.prefix,
-            storePath: opts.storePath,
           }), {priority})
         })(),
         // removing only the folder with the unpacked files
