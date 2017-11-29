@@ -4,6 +4,7 @@ import {Stats} from 'fs'
 import loadJsonFile = require('load-json-file')
 import mkdirp = require('mkdirp-promise')
 import fs = require('mz/fs')
+import PQueue = require('p-queue')
 import path = require('path')
 import exists = require('path-exists')
 import renameOverwrite = require('rename-overwrite')
@@ -26,6 +27,7 @@ import resolvePkg, {
   DirectoryResolution,
   PackageMeta,
   Resolution,
+  ResolveResult,
 } from './resolve'
 
 export interface PackageContentInfo {
@@ -54,7 +56,17 @@ export type FetchedPackage = {
   normalizedPref?: string,
 }
 
-export default async function fetch (
+export default function createFetcher (networkConcurrency: number = 16) {
+  const requestsQueue = new PQueue({
+    concurrency: networkConcurrency,
+  })
+  requestsQueue['counter'] = 0 // tslint:disable-line
+  requestsQueue['concurrency'] = networkConcurrency // tslint:disable-line
+  return fetch.bind(null, requestsQueue)
+}
+
+async function fetch (
+  requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
   wantedDependency: {
     alias?: string,
     pref: string,
@@ -90,15 +102,15 @@ export default async function fetch (
     let resolution = options.shrinkwrapResolution
     let pkgId = options.pkgId
     if (!resolution || options.update) {
-      const resolveResult = await resolvePkg(wantedDependency, {
-        getJson: <T>(url: string, registry: string) => options.got.getJSON<T>(url, registry, options.downloadPriority),
+      const resolveResult = await requestsQueue.add<ResolveResult>(() => resolvePkg(wantedDependency, {
+        getJson: options.got.getJSON,
         loggedPkg: options.loggedPkg,
         metaCache: options.metaCache,
         offline: options.offline,
         prefix: options.prefix,
         registry: options.registry,
         storePath: options.storePath,
-      })
+      }), {priority: options.downloadPriority})
       // keep the shrinkwrap resolution when possible
       // to keep the original shasum
       if (pkgId !== resolveResult.id || !resolution) {
@@ -138,6 +150,7 @@ export default async function fetch (
         pkg,
         pkgId: id,
         prefix: options.prefix,
+        requestsQueue,
         resolution: resolution as Resolution,
         storeIndex: options.storeIndex,
         storePath: options.storePath,
@@ -165,6 +178,7 @@ export default async function fetch (
 }
 
 function fetchToStore (opts: {
+  requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
   got: Got,
   offline: boolean,
   pkg?: PackageJson,
@@ -244,14 +258,20 @@ function fetchToStore (opts: {
       let packageIndex: {} = {}
       await Promise.all([
         (async () => {
-          packageIndex = await fetchResolution(opts.resolution, targetStage, {
+          // Tarballs are requested first because they are bigger than metadata files.
+          // However, when one line is left available, allow it to be picked up by a metadata request.
+          // This is done in order to avoid situations when tarballs are downloaded in chunks
+          // As much tarballs should be downloaded simultaneously as possible.
+          const priority = (++opts.requestsQueue['counter'] % opts.requestsQueue['concurrency'] === 0 ? -1 : 1) * 1000 // tslint:disable-line
+
+          packageIndex = await opts.requestsQueue.add(() => fetchResolution(opts.resolution, targetStage, {
             got: opts.got,
             ignore: opts.ignore,
             offline: opts.offline,
             pkgId: opts.pkgId,
             prefix: opts.prefix,
             storePath: opts.storePath,
-          })
+          }), {priority})
         })(),
         // removing only the folder with the unpacked files
         // not touching tarball and integrity.json
