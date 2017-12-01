@@ -1,9 +1,16 @@
+import resolveFromGit from '@pnpm/git-resolver'
+import resolveFromLocal from '@pnpm/local-resolver'
 import logger from '@pnpm/logger'
+import createResolveFromNpm from '@pnpm/npm-resolver'
+import resolveFromTarball from '@pnpm/tarball-resolver'
 import {PackageJson} from '@pnpm/types'
+import getCredentialsByURI = require('credentials-by-uri')
 import {Stats} from 'fs'
 import loadJsonFile = require('load-json-file')
+import mem = require('mem')
 import mkdirp = require('mkdirp-promise')
 import fs = require('mz/fs')
+import normalizeRegistryUrl = require('normalize-registry-url')
 import PQueue = require('p-queue')
 import path = require('path')
 import exists = require('path-exists')
@@ -23,10 +30,11 @@ import {LoggedPkg, progressLogger} from './loggers'
 import memoize, {MemoizedFunc} from './memoize'
 import createGot, {Got} from './network/got'
 import untouched from './pkgIsUntouched'
-import resolvePkg, {
+import createResolver, {
   DirectoryResolution,
   PackageMeta,
   Resolution,
+  ResolveFunction,
   ResolveResult,
 } from './resolve'
 
@@ -84,6 +92,9 @@ export default function createFetcher (
   },
 ) {
   opts = opts || {}
+
+  opts.rawNpmConfig.registry = normalizeRegistryUrl(opts.rawNpmConfig.registry || opts.registry)
+
   const networkConcurrency = opts.networkConcurrency || 16
   const requestsQueue = new PQueue({
     concurrency: networkConcurrency,
@@ -92,13 +103,36 @@ export default function createFetcher (
   requestsQueue['concurrency'] = networkConcurrency // tslint:disable-line
 
   const got = createGot(opts)
+  opts['getJson'] = got.getJSON //tslint:disable-line
 
-  return fetch.bind(null, requestsQueue, got)
+  const resolve = createResolver([
+    createResolveFromNpm as any, //tslint:disable-line
+    () => resolveFromTarball,
+    () => resolveFromGit,
+    () => resolveFromLocal,
+  ], opts)
+
+  return fetch.bind(null,
+    requestsQueue,
+    mem((registry: string) => getCredentialsByURI(registry, opts.rawNpmConfig)),
+    got,
+    resolve,
+  )
 }
 
 async function fetch (
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
+  getCredentialsByRegistry: (registry: string) => {
+    scope: string,
+    token: string | undefined,
+    password: string | undefined,
+    username: string | undefined,
+    email: string | undefined,
+    auth: string | undefined,
+    alwaysAuth: string | undefined,
+  },
   got: Got,
+  resolve: ResolveFunction,
   wantedDependency: {
     alias?: string,
     pref: string,
@@ -132,9 +166,10 @@ async function fetch (
     let normalizedPref: string | undefined
     let resolution = options.shrinkwrapResolution
     let pkgId = options.pkgId
+    const auth = getCredentialsByRegistry(options.registry)
     if (!resolution || options.update) {
-      const resolveResult = await requestsQueue.add<ResolveResult>(() => resolvePkg(wantedDependency, {
-        getJson: got.getJSON,
+      const resolveResult = await requestsQueue.add<ResolveResult>(() => resolve(wantedDependency, {
+        auth,
         loggedPkg: options.loggedPkg,
         metaCache: options.metaCache,
         offline: options.offline,
@@ -175,6 +210,7 @@ async function fetch (
 
     if (!options.fetchingLocker[id]) {
       options.fetchingLocker[id] = fetchToStore({
+        auth,
         download: got.download,
         ignore: options.ignore,
         offline: options.offline,
@@ -209,6 +245,7 @@ async function fetch (
 }
 
 function fetchToStore (opts: {
+  auth: object,
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
   offline: boolean,
   pkg?: PackageJson,
@@ -304,6 +341,7 @@ function fetchToStore (opts: {
           const priority = (++opts.requestsQueue['counter'] % opts.requestsQueue['concurrency'] === 0 ? -1 : 1) * 1000 // tslint:disable-line
 
           packageIndex = await opts.requestsQueue.add(() => fetchResolution(opts.resolution, targetStage, {
+            auth: opts.auth,
             cachedTarballLocation: path.join(opts.storePath, opts.pkgId, 'packed.tgz'),
             download: opts.download,
             ignore: opts.ignore,

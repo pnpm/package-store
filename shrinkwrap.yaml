@@ -2,10 +2,11 @@ dependencies:
   '@pnpm/git-fetcher': 0.1.0
   '@pnpm/git-resolver': 0.1.0
   '@pnpm/local-resolver': 0.1.0
-  '@pnpm/npm-resolver': 0.1.0
+  '@pnpm/npm-resolver': 0.2.0
   '@pnpm/tarball-resolver': 0.1.0
   '@pnpm/types': 1.0.0
   '@types/load-json-file': 2.0.7
+  '@types/mem': 1.1.2
   '@types/node': 8.0.53
   '@types/ramda': 0.25.6
   '@types/retry': 0.10.2
@@ -16,6 +17,7 @@ dependencies:
   execa: 0.8.0
   fs-write-stream-atomic: 1.0.10
   load-json-file: 4.0.0
+  mem: 3.0.0
   mkdirp-promise: 5.0.1
   mz: 2.7.0
   normalize-path: 2.1.1
@@ -113,7 +115,7 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-VRqE5/SiuR7ZrwBmS+Af89BTXli5xBbiqu7WPq56gEtWT8dKf9rFLoimmmMBVeRq5LmVZIXlOxs29F9I+vgSvQ==
-  /@pnpm/npm-resolver/0.1.0:
+  /@pnpm/npm-resolver/0.2.0:
     dependencies:
       '@pnpm/types': 1.1.0
       '@types/load-json-file': 2.0.7
@@ -132,7 +134,7 @@ packages:
     peerDependencies:
       '@pnpm/logger': ^1.0.0
     resolution:
-      integrity: sha512-O389SJnDkb61Rhl5+RdOsTA7dmsImLIQJc/BRXfXgzXOPAKfDj33SXHaAUENg3eVwFVKdhZAlq2KezgmZz4S+g==
+      integrity: sha512-OvwtA9jzV/LBbVwndHta88gslSwikLNznyaXN2Kwy0ZwwaZqZvTuI37ZuR6wW/jGUASi71OoacKA7xHMK9TUrw==
   /@pnpm/tarball-resolver/0.1.0:
     dependencies:
       parse-npm-tarball-url: 1.0.1
@@ -164,6 +166,10 @@ packages:
   /@types/load-json-file/2.0.7:
     resolution:
       integrity: sha512-NrH6jPlV77QCVPhAHofWeiOr77TgpKt82c2RVxSBChWBJqyY/u4ngl3CA4mcsAg/w7rNLrkR7dkObMV0ihLLXw==
+  /@types/mem/1.1.2:
+    dev: false
+    resolution:
+      integrity: sha1-48iwlfLyVjtRjwqtWd+f5qi4IGU=
   /@types/meow/3.6.2:
     dependencies:
       '@types/minimist': 1.2.0
@@ -3277,10 +3283,11 @@ specifiers:
   '@pnpm/git-resolver': ^0.1.0
   '@pnpm/local-resolver': ^0.1.0
   '@pnpm/logger': ^1.0.0
-  '@pnpm/npm-resolver': ^0.1.0
+  '@pnpm/npm-resolver': ^0.2.0
   '@pnpm/tarball-resolver': ^0.1.0
   '@pnpm/types': ^1.0.0
   '@types/load-json-file': ^2.0.5
+  '@types/mem': ^1.1.2
   '@types/nock': ^8.2.1
   '@types/node': ^8.0.34
   '@types/ramda': ^0.25.0
@@ -3297,6 +3304,7 @@ specifiers:
   husky: ^0.14.3
   in-publish: ^2.0.0
   load-json-file: ^4.0.0
+  mem: ^3.0.0
   mkdirp-promise: ^5.0.1
   mz: ^2.6.0
   nock: ^9.0.14

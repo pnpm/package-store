@@ -24,7 +24,6 @@ test('fail when tarball size does not match content-length', async t => {
   const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
-    rawNpmConfig: {},
     retry: RETRY,
   })
 
@@ -60,7 +59,6 @@ test('retry when tarball size does not match content-length', async t => {
   const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
-    rawNpmConfig: {},
     retry: RETRY,
   })
 
@@ -82,7 +80,6 @@ test('fail when integrity check fails two times in a row', async t => {
   const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
-    rawNpmConfig: {},
     retry: RETRY,
   })
 
@@ -118,7 +115,6 @@ test('retry when integrity check fails', async t => {
   const got = createGot({
     alwaysAuth: false,
     registry: 'http://example.com/',
-    rawNpmConfig: {},
     retry: RETRY,
   })
 

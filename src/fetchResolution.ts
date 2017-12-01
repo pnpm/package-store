@@ -16,12 +16,14 @@ const fetchLogger = logger('fetch')
 export type IgnoreFunction = (filename: string) => boolean
 
 export interface FetchOptions {
+  auth?: object,
   cachedTarballLocation: string,
   pkgId: string,
   offline: boolean,
   prefix: string,
   ignore?: IgnoreFunction,
   download (url: string, saveto: string, opts: {
+    auth?: object,
     unpackTo: string,
     registry?: string,
     onStart?: (totalSize: number | null, attempt: number) => void,
@@ -86,6 +88,7 @@ export async function fetchFromRemoteTarball (dir: string, dist: PackageDist, op
       throw new PnpmError('NO_OFFLINE_TARBALL', `Could not find ${opts.cachedTarballLocation} in local registry mirror`)
     }
     return await opts.download(dist.tarball, opts.cachedTarballLocation, {
+      auth: opts.auth,
       ignore: opts.ignore,
       integrity: dist.integrity,
       onProgress: (downloaded) => {

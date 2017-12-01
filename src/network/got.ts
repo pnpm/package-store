@@ -1,10 +1,8 @@
 import logger from '@pnpm/logger'
-import getCredentialsByURI = require('credentials-by-uri')
 import crypto = require('crypto')
 import createWriteStreamAtomic = require('fs-write-stream-atomic')
 import {IncomingMessage} from 'http'
 import mkdirp = require('mkdirp-promise')
-import normalizeRegistryUrl = require('normalize-registry-url')
 import RegClient = require('npm-registry-client')
 import pLimit = require('p-limit')
 import path = require('path')
@@ -14,15 +12,6 @@ import unpackStream = require('unpack-stream')
 import urlLib = require('url')
 import {BadTarballError} from '../errorTypes'
 import {progressLogger} from '../loggers'
-
-export type AuthInfo = {
-  alwaysAuth: boolean,
-} & ({
-  token: string,
-} | {
-  username: string,
-  password: string,
-})
 
 export interface HttpResponse {
   body: string
@@ -48,7 +37,6 @@ export interface NpmRegistryClient {
 
 export default (
   gotOpts: {
-    rawNpmConfig: object & { registry?: string },
     alwaysAuth: boolean,
     registry: string,
     proxy?: {
@@ -82,15 +70,12 @@ export default (
     },
   })
 
-  gotOpts.rawNpmConfig.registry = normalizeRegistryUrl(gotOpts.rawNpmConfig.registry || gotOpts.registry)
   const retryOpts = gotOpts.retry
 
-  const rawNpmConfig = gotOpts.rawNpmConfig || {}
-
-  function getJSON<T> (url: string, registry: string): Promise<T> {
+  function getJSON<T> (url: string, registry: string, auth?: object): Promise<T> {
     return new Promise((resolve, reject) => {
       const getOpts = {
-        auth: getCredentialsByURI(registry, rawNpmConfig),
+        auth,
         fullMetadata: false,
       }
       client.get(url, getOpts, (err: Error, data: object, raw: object, res: HttpResponse) => {
@@ -104,6 +89,15 @@ export default (
   }
 
   async function download (url: string, saveto: string, opts: {
+    auth?: {
+      scope: string,
+      token: string | undefined,
+      password: string | undefined,
+      username: string | undefined,
+      email: string | undefined,
+      auth: string | undefined,
+      alwaysAuth: string | undefined,
+    },
     unpackTo: string,
     registry?: string,
     onStart?: (totalSize: number | null, attempt: number) => void,
@@ -114,11 +108,10 @@ export default (
   }): Promise<{}> {
     await mkdirp(path.dirname(saveto))
 
-    const auth = opts.registry && getCredentialsByURI(opts.registry, rawNpmConfig)
     // If a tarball is hosted on a different place than the manifest, only send
     // credentials on `alwaysAuth`
-    const shouldAuth = auth && (
-      auth.alwaysAuth ||
+    const shouldAuth = opts.auth && (
+      opts.auth.alwaysAuth ||
       !opts.registry ||
       urlLib.parse(url).host === urlLib.parse(opts.registry).host
     )
@@ -140,7 +133,7 @@ export default (
 
     function fetch (currentAttempt: number) {
       return new Promise((resolve, reject) => {
-        client.fetch(url, {auth: shouldAuth && auth || undefined}, async (err: Error, res: IncomingMessage) => {
+        client.fetch(url, {auth: shouldAuth && opts.auth || undefined}, async (err: Error, res: IncomingMessage) => {
           if (err) return reject(err)
 
           if (res.statusCode !== 200) {
