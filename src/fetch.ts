@@ -1,5 +1,5 @@
 import fetchFromGit from '@pnpm/git-fetcher'
-import resolveFromGit from '@pnpm/git-resolver'
+import createResolveFromGit from '@pnpm/git-resolver'
 import resolveFromLocal from '@pnpm/local-resolver'
 import logger from '@pnpm/logger'
 import createResolveFromNpm from '@pnpm/npm-resolver'
@@ -104,12 +104,13 @@ export default function (
   requestsQueue['counter'] = 0 // tslint:disable-line
   requestsQueue['concurrency'] = networkConcurrency // tslint:disable-line
 
-  opts['getJson'] = createGetJson(opts) //tslint:disable-line
+  const getJson = createGetJson(opts)
+  opts['getJson'] = getJson //tslint:disable-line
 
   const resolve = combineResolvers([
     createResolveFromNpm(opts as any), //tslint:disable-line
     resolveFromTarball,
-    resolveFromGit,
+    createResolveFromGit({getJson}),
     resolveFromLocal,
   ])
 
@@ -207,7 +208,7 @@ async function resolveAndFetch (
         isLocal: true,
         normalizedPref,
         pkg,
-        resolution,
+        resolution: resolution as DirectoryResolution,
       }
     }
 

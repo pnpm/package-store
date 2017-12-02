@@ -1,15 +1,5 @@
-import logger from '@pnpm/logger'
-import {IncomingMessage} from 'http'
-import fs = require('mz/fs')
-import path = require('path')
 import * as unpackStream from 'unpack-stream'
 import {Resolution} from './combineResolvers'
-import {PnpmError} from './errorTypes'
-import {progressLogger} from './loggers'
-
-const gitLogger = logger('git')
-
-const fetchLogger = logger('fetch')
 
 export type IgnoreFunction = (filename: string) => boolean
 
@@ -22,12 +12,6 @@ export interface FetchOptions {
   ignore?: IgnoreFunction,
   onStart?: (totalSize: number | null, attempt: number) => void,
   onProgress?: (downloaded: number) => void,
-}
-
-export interface PackageDist {
-  tarball: string,
-  registry?: string,
-  integrity?: string,
 }
 
 export default function (

@@ -25,19 +25,10 @@ export interface DirectoryResolution {
   directory: string,
 }
 
-/**
- * Git repository
- */
-export interface GitRepositoryResolution {
-  type: 'git',
-  repo: string,
-  commit: string,
-}
-
 export type Resolution =
   TarballResolution |
-  GitRepositoryResolution |
-  DirectoryResolution
+  DirectoryResolution |
+  ({ type: string } & object)
 
 export interface ResolveResult {
   id: string,

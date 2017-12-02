@@ -1,6 +1,6 @@
 dependencies:
   '@pnpm/git-fetcher': 0.1.0
-  '@pnpm/git-resolver': 0.1.0
+  '@pnpm/git-resolver': 0.2.0
   '@pnpm/local-resolver': 0.1.0
   '@pnpm/npm-resolver': 0.2.0
   '@pnpm/tarball-fetcher': 0.1.0
@@ -78,7 +78,7 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-euO6D3tjsZjP0EjrzPqEaLEHZ/RE7x7y33AMM2wxAFGpcBHxqAvf9tSdLkByrlbnW9WmiOjcVoX6rKY9llS5kw==
-  /@pnpm/git-resolver/0.1.0:
+  /@pnpm/git-resolver/0.2.0:
     dependencies:
       '@types/node': 8.0.53
       graceful-git: 1.0.1
@@ -90,7 +90,7 @@ packages:
     peerDependencies:
       '@pnpm/logger': ^1.0.0
     resolution:
-      integrity: sha512-wGo7xkIcjk1eqRpO0QIGG4+3l7ReoAkGNHdynOofAOtqgN6GxHuOYaWOKOckUi1zegqAn/eGWc+awbrr1CmuEA==
+      integrity: sha512-PZR6YvshlgPUx6cJ/pH0vg+qV293rOASILEVHrJZXdR4Rm/ZhDKyh9wELTRVYV1hzj+GD3O2fL7JporBXPOYrg==
   /@pnpm/local-resolver/0.1.0:
     dependencies:
       '@pnpm/types': 1.1.0
@@ -3364,7 +3364,7 @@ shrinkwrapMinorVersion: 4
 shrinkwrapVersion: 3
 specifiers:
   '@pnpm/git-fetcher': ^0.1.0
-  '@pnpm/git-resolver': ^0.1.0
+  '@pnpm/git-resolver': ^0.2.0
   '@pnpm/local-resolver': ^0.1.0
   '@pnpm/logger': ^1.0.0
   '@pnpm/npm-resolver': ^0.2.0
