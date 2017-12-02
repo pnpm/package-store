@@ -3,9 +3,9 @@ import {IncomingMessage} from 'http'
 import fs = require('mz/fs')
 import path = require('path')
 import * as unpackStream from 'unpack-stream'
+import {Resolution} from './createResolver'
 import {PnpmError} from './errorTypes'
 import {progressLogger} from './loggers'
-import {Resolution} from './resolve'
 
 const gitLogger = logger('git')
 

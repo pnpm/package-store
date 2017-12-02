@@ -23,22 +23,22 @@ import * as unpackStream from 'unpack-stream'
 import writeJsonFile = require('write-json-file')
 import createFetcher, {
   FetchFunction, IgnoreFunction,
-} from './fetchResolution'
-import pkgIdToFilename from './fs/pkgIdToFilename'
-import {fromDir as readPkgFromDir} from './fs/readPkg'
-import {fromDir as safeReadPkgFromDir} from './fs/safeReadPkg'
-import {Store} from './fs/storeController'
-import {LoggedPkg, progressLogger} from './loggers'
-import memoize, {MemoizedFunc} from './memoize'
-import createGot, {Got} from './network/got'
-import untouched from './pkgIsUntouched'
+} from './createFetcher'
+import createGetJson from './createGetJson'
 import createResolver, {
   DirectoryResolution,
   PackageMeta,
   Resolution,
   ResolveFunction,
   ResolveResult,
-} from './resolve'
+} from './createResolver'
+import pkgIdToFilename from './fs/pkgIdToFilename'
+import {fromDir as readPkgFromDir} from './fs/readPkg'
+import {fromDir as safeReadPkgFromDir} from './fs/safeReadPkg'
+import {Store} from './fs/storeController'
+import {LoggedPkg, progressLogger} from './loggers'
+import memoize, {MemoizedFunc} from './memoize'
+import untouched from './pkgIsUntouched'
 
 export interface PackageContentInfo {
   isNew: boolean,
@@ -104,8 +104,7 @@ export default function (
   requestsQueue['counter'] = 0 // tslint:disable-line
   requestsQueue['concurrency'] = networkConcurrency // tslint:disable-line
 
-  const got = createGot(opts)
-  opts['getJson'] = got.getJSON //tslint:disable-line
+  opts['getJson'] = createGetJson(opts) //tslint:disable-line
 
   const resolve = createResolver([
     createResolveFromNpm as any, //tslint:disable-line
@@ -122,7 +121,6 @@ export default function (
   return resolveAndFetch.bind(null,
     requestsQueue,
     mem((registry: string) => getCredentialsByURI(registry, opts.rawNpmConfig)),
-    got,
     resolve,
     fetch,
   )
@@ -139,7 +137,6 @@ async function resolveAndFetch (
     auth: string | undefined,
     alwaysAuth: string | undefined,
   },
-  got: Got,
   resolve: ResolveFunction,
   fetch: FetchFunction,
   wantedDependency: {

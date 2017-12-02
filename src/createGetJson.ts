@@ -6,10 +6,6 @@ export interface HttpResponse {
   body: string
 }
 
-export interface Got {
-  getJSON<T> (url: string, registry: string): Promise<T>,
-}
-
 export interface NpmRegistryClient {
   get: (url: string, getOpts: object, cb: (err: Error, data: object, raw: object, res: HttpResponse) => void) => void,
   fetch: (url: string, opts: {auth?: object}, cb: (err: Error, res: IncomingMessage) => void) => void,
@@ -39,7 +35,7 @@ export default (
     },
     userAgent?: string,
   },
-): Got => {
+): <T>(url: string, registry: string) => Promise<T> => {
   const registryLog = logger('registry')
   const client = new RegClient({
     ...gotOpts,
@@ -50,9 +46,7 @@ export default (
     },
   })
 
-  const retryOpts = gotOpts.retry
-
-  function getJSON<T> (url: string, registry: string, auth?: object): Promise<T> {
+  return function getJSON<T> (url: string, registry: string, auth?: object): Promise<T> {
     return new Promise((resolve, reject) => {
       const getOpts = {
         auth,
@@ -66,9 +60,5 @@ export default (
         resolve(data as any) // tslint:disable-line
       })
     })
-  }
-
-  return {
-    getJSON,
   }
 }
