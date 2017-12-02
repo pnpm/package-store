@@ -64,12 +64,11 @@ export interface WantedDependency {
 
 export type ResolveFunction = (wantedDependency: WantedDependency, opts: ResolveOptions) => Promise<ResolveResult>
 
-export default function (resolverCreators: Array<(opts: object) => ResolveFunction>, opts: object) {
-  const resolvers = resolverCreators.map((createResolver) => createResolver(opts))
-  return resolver.bind(null, resolvers)
+export default function combineResolvers (resolvers: ResolveFunction[]) {
+  return combineAndRunResolvers.bind(null, resolvers)
 }
 
-async function resolver (
+async function combineAndRunResolvers (
   resolvers: ResolveFunction[],
   wantedDependency: WantedDependency,
   opts: ResolveOptions,

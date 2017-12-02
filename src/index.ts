@@ -3,7 +3,7 @@ import {
   DirectoryResolution,
   PackageMeta,
   Resolution,
-} from './createResolver'
+} from './combineResolvers'
 import createFetcher, {FetchedPackage, PackageContentInfo} from './fetch'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {read, save, Store} from './fs/storeController'

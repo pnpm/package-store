@@ -3,7 +3,7 @@ import {IncomingMessage} from 'http'
 import fs = require('mz/fs')
 import path = require('path')
 import * as unpackStream from 'unpack-stream'
-import {Resolution} from './createResolver'
+import {Resolution} from './combineResolvers'
 import {PnpmError} from './errorTypes'
 import {progressLogger} from './loggers'
 
@@ -31,18 +31,16 @@ export interface PackageDist {
 }
 
 export default function (
-  fetcherCreators: Array<(opts: object) => {type: string, fetch: FetchFunction}>,
-  opts: object,
+  fetchers: Array<{type: string, fetch: FetchFunction}>,
 ) {
-  const fetchers = fetcherCreators.reduce((fetcherByHostingType, createFetcher) => {
-    const f = createFetcher(opts)
-    fetcherByHostingType[f.type] = f.fetch
-    return fetcherByHostingType
+  const fetcherByHostingType = fetchers.reduce((acc, f) => {
+    acc[f.type] = f.fetch
+    return acc
   }, {})
-  return fetcher.bind(null, fetchers)
+  return fetcher.bind(null, fetcherByHostingType)
 }
 
-export type FetchFunction =  (
+export type FetchFunction = (
   resolution: Resolution,
   target: string,
   opts: FetchOptions,

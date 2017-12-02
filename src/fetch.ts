@@ -21,17 +21,17 @@ import rimraf = require('rimraf-then')
 import symlinkDir = require('symlink-dir')
 import * as unpackStream from 'unpack-stream'
 import writeJsonFile = require('write-json-file')
-import createFetcher, {
+import combineFetchers, {
   FetchFunction, IgnoreFunction,
-} from './createFetcher'
-import createGetJson from './createGetJson'
-import createResolver, {
+} from './combineFetchers'
+import combineResolvers, {
   DirectoryResolution,
   PackageMeta,
   Resolution,
   ResolveFunction,
   ResolveResult,
-} from './createResolver'
+} from './combineResolvers'
+import createGetJson from './createGetJson'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {fromDir as readPkgFromDir} from './fs/readPkg'
 import {fromDir as safeReadPkgFromDir} from './fs/safeReadPkg'
@@ -106,17 +106,17 @@ export default function (
 
   opts['getJson'] = createGetJson(opts) //tslint:disable-line
 
-  const resolve = createResolver([
-    createResolveFromNpm as any, //tslint:disable-line
-    () => resolveFromTarball,
-    () => resolveFromGit,
-    () => resolveFromLocal,
-  ], opts)
+  const resolve = combineResolvers([
+    createResolveFromNpm(opts as any), //tslint:disable-line
+    resolveFromTarball,
+    resolveFromGit,
+    resolveFromLocal,
+  ])
 
-  const fetch = createFetcher([
-    createTarballFetcher,
-    () => ({type: 'git', fetch: fetchFromGit}) as any, //tslint:disable-line
-  ], opts)
+  const fetch = combineFetchers([
+    createTarballFetcher(opts),
+    {type: 'git', fetch: fetchFromGit},
+  ])
 
   return resolveAndFetch.bind(null,
     requestsQueue,
