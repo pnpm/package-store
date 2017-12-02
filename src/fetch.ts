@@ -177,7 +177,6 @@ async function resolveAndFetch (
     if (!resolution || options.update) {
       const resolveResult = await requestsQueue.add<ResolveResult>(() => resolve(wantedDependency, {
         auth,
-        loggedPkg: options.loggedPkg,
         metaCache: options.metaCache,
         offline: options.offline,
         prefix: options.prefix,

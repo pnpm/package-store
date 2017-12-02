@@ -40,12 +40,11 @@ export interface ResolveResult {
 
 export interface ResolveOptions {
   auth: object,
-  loggedPkg: LoggedPkg,
-  storePath: string,
+  storePath: string, // TODO: move out to shared opts
   registry: string,
-  metaCache: Map<string, PackageMeta>,
+  metaCache: Map<string, PackageMeta>, // TODO: move out to shared opts
   prefix: string,
-  offline: boolean,
+  offline: boolean, // TODO: move out to shared opts
 }
 
 export interface WantedDependency {

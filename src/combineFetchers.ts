@@ -4,12 +4,12 @@ import {Resolution} from './combineResolvers'
 export type IgnoreFunction = (filename: string) => boolean
 
 export interface FetchOptions {
-  auth?: object,
+  auth?: object, //// TODO: move out to shared opts?!
   cachedTarballLocation: string,
   pkgId: string,
-  offline: boolean,
+  offline: boolean, // TODO: move out to shared opts
   prefix: string,
-  ignore?: IgnoreFunction,
+  ignore?: IgnoreFunction, // TODO: move out to shared opts
   onStart?: (totalSize: number | null, attempt: number) => void,
   onProgress?: (downloaded: number) => void,
 }
