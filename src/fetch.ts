@@ -24,13 +24,6 @@ import writeJsonFile = require('write-json-file')
 import combineFetchers, {
   FetchFunction, IgnoreFunction,
 } from './combineFetchers'
-import combineResolvers, {
-  DirectoryResolution,
-  PackageMeta,
-  Resolution,
-  ResolveFunction,
-  ResolveResult,
-} from './combineResolvers'
 import createGetJson from './createGetJson'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {fromDir as readPkgFromDir} from './fs/readPkg'
@@ -39,6 +32,15 @@ import {Store} from './fs/storeController'
 import {LoggedPkg, progressLogger} from './loggers'
 import memoize, {MemoizedFunc} from './memoize'
 import untouched from './pkgIsUntouched'
+import {
+  DirectoryResolution,
+  PackageMeta,
+  Resolution,
+  ResolveFunction,
+  ResolveOptions,
+  ResolveResult,
+  WantedDependency,
+} from './resolvers'
 
 export interface PackageContentInfo {
   isNew: boolean,
@@ -107,12 +109,7 @@ export default function (
   const getJson = createGetJson(opts)
   opts['getJson'] = getJson //tslint:disable-line
 
-  const resolve = combineResolvers([
-    createResolveFromNpm(opts as any), //tslint:disable-line
-    resolveFromTarball,
-    createResolveFromGit({getJson}),
-    resolveFromLocal,
-  ])
+  const resolve = createResolver({getJson})
 
   const fetch = combineFetchers([
     createTarballFetcher(opts),
@@ -125,6 +122,25 @@ export default function (
     resolve,
     fetch,
   )
+}
+
+function createResolver (
+  sharedOpts: {
+    getJson<T> (url: string, registry: string, auth?: object): Promise<T>,
+  },
+) {
+  const resolveFromNpm = createResolveFromNpm(sharedOpts)
+  const resolveFromGit = createResolveFromGit(sharedOpts)
+  return async (wantedDependency: WantedDependency, opts: ResolveOptions) => {
+    const resolution = await resolveFromNpm(wantedDependency, opts)
+      || await resolveFromTarball(wantedDependency)
+      || await resolveFromGit(wantedDependency, opts)
+      || await resolveFromLocal(wantedDependency, opts)
+    if (!resolution) {
+      throw new Error(`Cannot resolve ${wantedDependency.alias ? wantedDependency.alias + '@' : ''}${wantedDependency.pref} packages not supported`)
+    }
+    return resolution
+  }
 }
 
 async function resolveAndFetch (

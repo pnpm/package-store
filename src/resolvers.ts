@@ -53,19 +53,3 @@ export interface WantedDependency {
 }
 
 export type ResolveFunction = (wantedDependency: WantedDependency, opts: ResolveOptions) => Promise<ResolveResult>
-
-export default function combineResolvers (resolvers: ResolveFunction[]) {
-  return combineAndRunResolvers.bind(null, resolvers)
-}
-
-async function combineAndRunResolvers (
-  resolvers: ResolveFunction[],
-  wantedDependency: WantedDependency,
-  opts: ResolveOptions,
-): Promise<ResolveResult> {
-  for (const resolve of resolvers) {
-    const resolution = await resolve(wantedDependency, opts)
-    if (resolution) return resolution
-  }
-  throw new Error(`Cannot resolve ${wantedDependency.alias ? wantedDependency.alias + '@' : ''}${wantedDependency.pref} packages not supported`)
-}

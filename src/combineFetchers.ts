@@ -1,5 +1,5 @@
 import * as unpackStream from 'unpack-stream'
-import {Resolution} from './combineResolvers'
+import {Resolution} from './resolvers'
 
 export type IgnoreFunction = (filename: string) => boolean
 
