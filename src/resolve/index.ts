@@ -1,7 +1,6 @@
 import {PackageMeta} from '@pnpm/npm-resolver'
 import {PackageJson} from '@pnpm/types'
 import {LoggedPkg} from '../loggers'
-import {Got} from '../network/got'
 
 export {PackageMeta}
 

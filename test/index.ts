@@ -1,6 +1,5 @@
 import * as packageStore from 'package-store'
 import test = require('tape')
-import './network/got'
 
 test('public API', t => {
   t.equal(typeof packageStore.createFetcher, 'function')

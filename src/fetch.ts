@@ -1,7 +1,9 @@
+import fetchFromGit from '@pnpm/git-fetcher'
 import resolveFromGit from '@pnpm/git-resolver'
 import resolveFromLocal from '@pnpm/local-resolver'
 import logger from '@pnpm/logger'
 import createResolveFromNpm from '@pnpm/npm-resolver'
+import createTarballFetcher from '@pnpm/tarball-fetcher'
 import resolveFromTarball from '@pnpm/tarball-resolver'
 import {PackageJson} from '@pnpm/types'
 import getCredentialsByURI = require('credentials-by-uri')
@@ -19,8 +21,8 @@ import rimraf = require('rimraf-then')
 import symlinkDir = require('symlink-dir')
 import * as unpackStream from 'unpack-stream'
 import writeJsonFile = require('write-json-file')
-import fetchResolution, {
-  IgnoreFunction,
+import createFetcher, {
+  FetchFunction, IgnoreFunction,
 } from './fetchResolution'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {fromDir as readPkgFromDir} from './fs/readPkg'
@@ -64,7 +66,7 @@ export type FetchedPackage = {
   normalizedPref?: string,
 }
 
-export default function createFetcher (
+export default function (
   opts: {
     rawNpmConfig: object & { registry?: string },
     alwaysAuth: boolean,
@@ -112,15 +114,21 @@ export default function createFetcher (
     () => resolveFromLocal,
   ], opts)
 
-  return fetch.bind(null,
+  const fetch = createFetcher([
+    createTarballFetcher,
+    () => ({type: 'git', fetch: fetchFromGit}) as any, //tslint:disable-line
+  ], opts)
+
+  return resolveAndFetch.bind(null,
     requestsQueue,
     mem((registry: string) => getCredentialsByURI(registry, opts.rawNpmConfig)),
     got,
     resolve,
+    fetch,
   )
 }
 
-async function fetch (
+async function resolveAndFetch (
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
   getCredentialsByRegistry: (registry: string) => {
     scope: string,
@@ -133,6 +141,7 @@ async function fetch (
   },
   got: Got,
   resolve: ResolveFunction,
+  fetch: FetchFunction,
   wantedDependency: {
     alias?: string,
     pref: string,
@@ -211,7 +220,7 @@ async function fetch (
     if (!options.fetchingLocker[id]) {
       options.fetchingLocker[id] = fetchToStore({
         auth,
-        download: got.download,
+        fetch,
         ignore: options.ignore,
         offline: options.offline,
         pkg,
@@ -246,6 +255,7 @@ async function fetch (
 
 function fetchToStore (opts: {
   auth: object,
+  fetch: FetchFunction,
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
   offline: boolean,
   pkg?: PackageJson,
@@ -258,15 +268,6 @@ function fetchToStore (opts: {
   storeIndex: Store,
   verifyStoreIntegrity: boolean,
   ignore?: IgnoreFunction,
-  download (url: string, saveto: string, opts: {
-    unpackTo: string,
-    registry?: string,
-    onStart?: (totalSize: number | null, attempt: number) => void,
-    onProgress?: (downloaded: number) => void,
-    ignore?: (filename: string) => boolean,
-    integrity?: string
-    generatePackageIntegrity?: boolean,
-  }): Promise<{}>,
 }): {
   fetchingFiles: Promise<PackageContentInfo>,
   fetchingPkg: Promise<PackageJson>,
@@ -340,12 +341,17 @@ function fetchToStore (opts: {
           // As much tarballs should be downloaded simultaneously as possible.
           const priority = (++opts.requestsQueue['counter'] % opts.requestsQueue['concurrency'] === 0 ? -1 : 1) * 1000 // tslint:disable-line
 
-          packageIndex = await opts.requestsQueue.add(() => fetchResolution(opts.resolution, targetStage, {
+          packageIndex = await opts.requestsQueue.add(() => opts.fetch(opts.resolution, targetStage, {
             auth: opts.auth,
             cachedTarballLocation: path.join(opts.storePath, opts.pkgId, 'packed.tgz'),
-            download: opts.download,
             ignore: opts.ignore,
             offline: opts.offline,
+            onProgress: (downloaded) => {
+              progressLogger.debug({status: 'fetching_progress', pkgId: opts.pkgId, downloaded})
+            },
+            onStart: (size, attempt) => {
+              progressLogger.debug({status: 'fetching_started', pkgId: opts.pkgId, size, attempt})
+            },
             pkgId: opts.pkgId,
             prefix: opts.prefix,
           }), {priority})
