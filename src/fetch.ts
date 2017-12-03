@@ -1,10 +1,4 @@
-import fetchFromGit from '@pnpm/git-fetcher'
-import createResolveFromGit from '@pnpm/git-resolver'
-import resolveFromLocal from '@pnpm/local-resolver'
 import logger from '@pnpm/logger'
-import createResolveFromNpm from '@pnpm/npm-resolver'
-import createTarballFetcher from '@pnpm/tarball-fetcher'
-import resolveFromTarball from '@pnpm/tarball-resolver'
 import {PackageJson} from '@pnpm/types'
 import getCredentialsByURI = require('credentials-by-uri')
 import {Stats} from 'fs'
@@ -24,7 +18,6 @@ import writeJsonFile = require('write-json-file')
 import combineFetchers, {
   FetchFunction, IgnoreFunction,
 } from './combineFetchers'
-import createGetJson from './createGetJson'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {fromDir as readPkgFromDir} from './fs/readPkg'
 import {fromDir as safeReadPkgFromDir} from './fs/safeReadPkg'
@@ -34,7 +27,6 @@ import memoize, {MemoizedFunc} from './memoize'
 import untouched from './pkgIsUntouched'
 import {
   DirectoryResolution,
-  PackageMeta,
   Resolution,
   ResolveFunction,
   ResolveOptions,
@@ -69,30 +61,13 @@ export type FetchedPackage = {
 }
 
 export default function (
+  resolve: ResolveFunction,
+  fetch: FetchFunction,
   opts: {
     rawNpmConfig: object & { registry?: string },
     alwaysAuth: boolean,
     registry: string,
     networkConcurrency: number,
-    proxy?: {
-      http?: string,
-      https?: string,
-      localAddress?: string,
-    },
-    ssl?: {
-      certificate?: string,
-      key?: string,
-      ca?: string,
-      strict?: boolean,
-    },
-    retry?: {
-      count?: number,
-      factor?: number,
-      minTimeout?: number,
-      maxTimeout?: number,
-      randomize?: boolean,
-    },
-    userAgent?: string,
   },
 ) {
   opts = opts || {}
@@ -106,41 +81,12 @@ export default function (
   requestsQueue['counter'] = 0 // tslint:disable-line
   requestsQueue['concurrency'] = networkConcurrency // tslint:disable-line
 
-  const getJson = createGetJson(opts)
-  opts['getJson'] = getJson //tslint:disable-line
-
-  const resolve = createResolver({getJson})
-
-  const fetch = combineFetchers([
-    createTarballFetcher(opts),
-    {type: 'git', fetch: fetchFromGit},
-  ])
-
   return resolveAndFetch.bind(null,
     requestsQueue,
     mem((registry: string) => getCredentialsByURI(registry, opts.rawNpmConfig)),
     resolve,
     fetch,
   )
-}
-
-function createResolver (
-  sharedOpts: {
-    getJson<T> (url: string, registry: string, auth?: object): Promise<T>,
-  },
-) {
-  const resolveFromNpm = createResolveFromNpm(sharedOpts)
-  const resolveFromGit = createResolveFromGit(sharedOpts)
-  return async (wantedDependency: WantedDependency, opts: ResolveOptions) => {
-    const resolution = await resolveFromNpm(wantedDependency, opts)
-      || await resolveFromTarball(wantedDependency)
-      || await resolveFromGit(wantedDependency, opts)
-      || await resolveFromLocal(wantedDependency, opts)
-    if (!resolution) {
-      throw new Error(`Cannot resolve ${wantedDependency.alias ? wantedDependency.alias + '@' : ''}${wantedDependency.pref} packages not supported`)
-    }
-    return resolution
-  }
 }
 
 async function resolveAndFetch (
@@ -171,7 +117,7 @@ async function resolveAndFetch (
     },
     ignore?: IgnoreFunction,
     loggedPkg: LoggedPkg,
-    metaCache: Map<string, PackageMeta>,
+    metaCache: Map<string, object>,
     offline: boolean,
     pkgId?: string,
     prefix: string,

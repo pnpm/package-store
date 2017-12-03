@@ -1,8 +1,5 @@
-import {PackageMeta} from '@pnpm/npm-resolver'
 import {PackageJson} from '@pnpm/types'
 import {LoggedPkg} from './loggers'
-
-export {PackageMeta}
 
 /**
  * tarball hosted remotely
@@ -42,7 +39,7 @@ export interface ResolveOptions {
   auth: object,
   storePath: string, // TODO: move out to shared opts
   registry: string,
-  metaCache: Map<string, PackageMeta>, // TODO: move out to shared opts
+  metaCache: Map<string, object>, // TODO: move out to shared opts
   prefix: string,
   offline: boolean, // TODO: move out to shared opts
 }
