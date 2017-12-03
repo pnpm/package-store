@@ -1,9 +1,7 @@
 import logger from '@pnpm/logger'
 import {PackageJson} from '@pnpm/types'
-import getCredentialsByURI = require('credentials-by-uri')
 import {Stats} from 'fs'
 import loadJsonFile = require('load-json-file')
-import mem = require('mem')
 import mkdirp = require('mkdirp-promise')
 import fs = require('mz/fs')
 import normalizeRegistryUrl = require('normalize-registry-url')
@@ -64,15 +62,10 @@ export default function (
   resolve: ResolveFunction,
   fetch: FetchFunction,
   opts: {
-    rawNpmConfig: object & { registry?: string },
-    alwaysAuth: boolean,
-    registry: string,
     networkConcurrency: number,
   },
 ) {
   opts = opts || {}
-
-  opts.rawNpmConfig.registry = normalizeRegistryUrl(opts.rawNpmConfig.registry || opts.registry)
 
   const networkConcurrency = opts.networkConcurrency || 16
   const requestsQueue = new PQueue({
@@ -83,7 +76,6 @@ export default function (
 
   return resolveAndFetch.bind(null,
     requestsQueue,
-    mem((registry: string) => getCredentialsByURI(registry, opts.rawNpmConfig)),
     resolve,
     fetch,
   )
@@ -91,15 +83,6 @@ export default function (
 
 async function resolveAndFetch (
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
-  getCredentialsByRegistry: (registry: string) => {
-    scope: string,
-    token: string | undefined,
-    password: string | undefined,
-    username: string | undefined,
-    email: string | undefined,
-    auth: string | undefined,
-    alwaysAuth: string | undefined,
-  },
   resolve: ResolveFunction,
   fetch: FetchFunction,
   wantedDependency: {
@@ -133,10 +116,8 @@ async function resolveAndFetch (
     let normalizedPref: string | undefined
     let resolution = options.shrinkwrapResolution
     let pkgId = options.pkgId
-    const auth = getCredentialsByRegistry(options.registry)
     if (!resolution || options.update) {
       const resolveResult = await requestsQueue.add<ResolveResult>(() => resolve(wantedDependency, {
-        auth,
         prefix: options.prefix,
         registry: options.registry,
       }), {priority: options.downloadPriority})
@@ -173,7 +154,6 @@ async function resolveAndFetch (
 
     if (!options.fetchingLocker[id]) {
       options.fetchingLocker[id] = fetchToStore({
-        auth,
         fetch,
         pkg,
         pkgId: id,
@@ -206,7 +186,6 @@ async function resolveAndFetch (
 }
 
 function fetchToStore (opts: {
-  auth: object,
   fetch: FetchFunction,
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
   pkg?: PackageJson,
@@ -292,7 +271,6 @@ function fetchToStore (opts: {
           const priority = (++opts.requestsQueue['counter'] % opts.requestsQueue['concurrency'] === 0 ? -1 : 1) * 1000 // tslint:disable-line
 
           packageIndex = await opts.requestsQueue.add(() => opts.fetch(opts.resolution, targetStage, {
-            auth: opts.auth,
             cachedTarballLocation: path.join(opts.storePath, opts.pkgId, 'packed.tgz'),
             onProgress: (downloaded) => {
               progressLogger.debug({status: 'fetching_progress', pkgId: opts.pkgId, downloaded})

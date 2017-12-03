@@ -36,7 +36,6 @@ export interface ResolveResult {
 }
 
 export interface ResolveOptions {
-  auth: object,
   registry: string,
   prefix: string,
 }

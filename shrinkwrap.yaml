@@ -1,17 +1,14 @@
 dependencies:
   '@pnpm/types': 1.0.0
   '@types/load-json-file': 2.0.7
-  '@types/mem': 1.1.2
   '@types/node': 8.0.53
   '@types/ramda': 0.25.6
   '@types/retry': 0.10.2
-  credentials-by-uri: 1.0.0
   dint: 1.0.0
   drive-by-path: 1.0.0
   encode-registry: 1.1.0
   execa: 0.8.0
   load-json-file: 4.0.0
-  mem: 3.0.0
   mkdirp-promise: 5.0.1
   mz: 2.7.0
   normalize-path: 2.1.1
@@ -89,10 +86,6 @@ packages:
   /@types/load-json-file/2.0.7:
     resolution:
       integrity: sha512-NrH6jPlV77QCVPhAHofWeiOr77TgpKt82c2RVxSBChWBJqyY/u4ngl3CA4mcsAg/w7rNLrkR7dkObMV0ihLLXw==
-  /@types/mem/1.1.2:
-    dev: false
-    resolution:
-      integrity: sha1-48iwlfLyVjtRjwqtWd+f5qi4IGU=
   /@types/meow/3.6.2:
     dependencies:
       '@types/minimist': 1.2.0
@@ -476,12 +469,6 @@ packages:
   /core-util-is/1.0.2:
     resolution:
       integrity: sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
-  /credentials-by-uri/1.0.0:
-    dependencies:
-      nerf-dart: 1.0.0
-    dev: false
-    resolution:
-      integrity: sha512-WtoZkGQV2KgEfEqWKPetJ2btv+GxldzOe2vHVqAcyuiYdpIwCX7viL2+P9EaZLLfR+SFAZgPdP1+HZJ7MqRc2A==
   /cross-spawn/5.1.0:
     dependencies:
       lru-cache: 4.1.1
@@ -1671,10 +1658,6 @@ packages:
     dev: true
     resolution:
       integrity: sha1-rmA7NrE0vOw0e0UkIrC/mNWDLsg=
-  /nerf-dart/1.0.0:
-    dev: false
-    resolution:
-      integrity: sha1-5tq3/r9a2Bbqgc9cYpxaDr3nLBo=
   /next-path/1.0.0:
     dev: true
     engines:
@@ -2846,14 +2829,12 @@ specifiers:
   '@pnpm/logger': ^1.0.0
   '@pnpm/types': ^1.0.0
   '@types/load-json-file': ^2.0.5
-  '@types/mem': ^1.1.2
   '@types/nock': ^8.2.1
   '@types/node': ^8.0.34
   '@types/ramda': ^0.25.0
   '@types/retry': ^0.10.1
   '@types/tape': ^4.2.30
   commitizen: ^2.8.6
-  credentials-by-uri: ^1.0.0
   cz-conventional-changelog: ^2.0.0
   dint: ^1.0.0
   drive-by-path: ^1.0.0
@@ -2862,7 +2843,6 @@ specifiers:
   husky: ^0.14.3
   in-publish: ^2.0.0
   load-json-file: ^4.0.0
-  mem: ^3.0.0
   mkdirp-promise: ^5.0.1
   mz: ^2.6.0
   nock: ^9.0.14
