@@ -139,7 +139,6 @@ async function resolveAndFetch (
         auth,
         prefix: options.prefix,
         registry: options.registry,
-        storePath: options.storePath,
       }), {priority: options.downloadPriority})
       // keep the shrinkwrap resolution when possible
       // to keep the original shasum

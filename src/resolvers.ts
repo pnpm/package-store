@@ -37,7 +37,6 @@ export interface ResolveResult {
 
 export interface ResolveOptions {
   auth: object,
-  storePath: string, // TODO: move out to shared opts
   registry: string,
   prefix: string,
 }
