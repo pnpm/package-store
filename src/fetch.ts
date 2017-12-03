@@ -16,7 +16,7 @@ import symlinkDir = require('symlink-dir')
 import * as unpackStream from 'unpack-stream'
 import writeJsonFile = require('write-json-file')
 import combineFetchers, {
-  FetchFunction, IgnoreFunction,
+  FetchFunction,
 } from './combineFetchers'
 import pkgIdToFilename from './fs/pkgIdToFilename'
 import {fromDir as readPkgFromDir} from './fs/readPkg'
@@ -115,9 +115,7 @@ async function resolveAndFetch (
         fetchingPkg: Promise<PackageJson>,
       },
     },
-    ignore?: IgnoreFunction,
     loggedPkg: LoggedPkg,
-    metaCache: Map<string, object>,
     offline: boolean,
     pkgId?: string,
     prefix: string,
@@ -139,8 +137,6 @@ async function resolveAndFetch (
     if (!resolution || options.update) {
       const resolveResult = await requestsQueue.add<ResolveResult>(() => resolve(wantedDependency, {
         auth,
-        metaCache: options.metaCache,
-        offline: options.offline,
         prefix: options.prefix,
         registry: options.registry,
         storePath: options.storePath,
@@ -180,8 +176,6 @@ async function resolveAndFetch (
       options.fetchingLocker[id] = fetchToStore({
         auth,
         fetch,
-        ignore: options.ignore,
-        offline: options.offline,
         pkg,
         pkgId: id,
         prefix: options.prefix,
@@ -216,7 +210,6 @@ function fetchToStore (opts: {
   auth: object,
   fetch: FetchFunction,
   requestsQueue: {add: <T>(fn: () => Promise<T>, opts: {priority: number}) => Promise<T>},
-  offline: boolean,
   pkg?: PackageJson,
   pkgId: string,
   prefix: string,
@@ -226,7 +219,6 @@ function fetchToStore (opts: {
   storePath: string,
   storeIndex: Store,
   verifyStoreIntegrity: boolean,
-  ignore?: IgnoreFunction,
 }): {
   fetchingFiles: Promise<PackageContentInfo>,
   fetchingPkg: Promise<PackageJson>,
@@ -303,8 +295,6 @@ function fetchToStore (opts: {
           packageIndex = await opts.requestsQueue.add(() => opts.fetch(opts.resolution, targetStage, {
             auth: opts.auth,
             cachedTarballLocation: path.join(opts.storePath, opts.pkgId, 'packed.tgz'),
-            ignore: opts.ignore,
-            offline: opts.offline,
             onProgress: (downloaded) => {
               progressLogger.debug({status: 'fetching_progress', pkgId: opts.pkgId, downloaded})
             },

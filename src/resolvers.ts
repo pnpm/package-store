@@ -39,9 +39,7 @@ export interface ResolveOptions {
   auth: object,
   storePath: string, // TODO: move out to shared opts
   registry: string,
-  metaCache: Map<string, object>, // TODO: move out to shared opts
   prefix: string,
-  offline: boolean, // TODO: move out to shared opts
 }
 
 export interface WantedDependency {
