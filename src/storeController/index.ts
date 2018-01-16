@@ -6,6 +6,7 @@ import createPackageRequester, {
   ResolveFunction,
 } from '@pnpm/package-requester'
 import {StoreIndex} from '@pnpm/types'
+import fs = require('mz/fs')
 import pFilter = require('p-filter')
 import pLimit = require('p-limit')
 import path = require('path')
@@ -110,6 +111,9 @@ export default async function (
   async function upload (nodeVersion: string, pkg: {peripheralLocation: string, id: string}) {
     const nodeMajor = nodeVersion.substring(0, nodeVersion.indexOf('.'))
     const cachePath = path.join(store, 'side-effects-cache', nodeMajor, pkg.id)
+    if (await fs.exists(cachePath) || await fs.exists(`${cachePath}+stage`)) {
+      return
+    }
     await copyPkg(pkg.peripheralLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
   }
 }
