@@ -16,7 +16,7 @@ import {
   read as readStore,
   save as saveStore,
 } from '../fs/storeIndex'
-import createImportPackage, {ImportPackageFunction} from './createImportPackage'
+import createImportPackage, {copyPkg, ImportPackageFunction} from './createImportPackage'
 
 export interface StoreController {
   requestPackage: RequestPackageFunction,
@@ -25,6 +25,7 @@ export interface StoreController {
   updateConnections (prefix: string, opts: {addDependencies: string[], removeDependencies: string[], prune: boolean}): Promise<void>,
   prune (): Promise<void>,
   saveState (): Promise<void>,
+  upload (nodeVersion: string, pkg: {peripheralLocation: string, id: string}): Promise<void>,
 }
 
 export default async function (
@@ -63,6 +64,7 @@ export default async function (
       await removeDependencies(prefix, opts.removeDependencies, {prune: opts.prune})
       await addDependencies(prefix, opts.addDependencies)
     },
+    upload,
   }
 
   function saveState () {
@@ -103,6 +105,12 @@ export default async function (
         }
       }
     }
+  }
+
+  async function upload (nodeVersion: string, pkg: {peripheralLocation: string, id: string}) {
+    const nodeMajor = nodeVersion.substring(0, nodeVersion.indexOf('.'))
+    const cachePath = path.join(store, 'side-effects-cache', nodeMajor, pkg.id)
+    await copyPkg(pkg.peripheralLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
   }
 }
 

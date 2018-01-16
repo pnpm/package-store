@@ -68,7 +68,7 @@ function createImportPackage (packageImportMethod?: 'auto' | 'hardlink' | 'copy'
     case 'copy':
       return copyPkg
     default:
-      throw new Error(`Unknow package import pethod ${packageImportMethod}`)
+      throw new Error(`Unknown package import method ${packageImportMethod}`)
   }
 }
 
@@ -119,7 +119,7 @@ async function isSameFile (file1: string, file2: string) {
   return stats[0].ino === stats[1].ino
 }
 
-async function copyPkg (
+export async function copyPkg (
   from: string,
   to: string,
   opts: {
@@ -129,7 +129,9 @@ async function copyPkg (
 ) {
   const pkgJsonPath = path.join(to, 'package.json')
   if (!opts.filesResponse.fromStore || opts.force || !await exists(pkgJsonPath)) {
-    await mkdirp(to)
-    await ncp(from + '/.', to)
+    const staging = `${to}+stage`
+    await mkdirp(staging)
+    await ncp(from + '/.', staging)
+    await fs.rename(staging, to)
   }
 }
