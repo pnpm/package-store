@@ -26,7 +26,7 @@ export interface StoreController {
   updateConnections (prefix: string, opts: {addDependencies: string[], removeDependencies: string[], prune: boolean}): Promise<void>,
   prune (): Promise<void>,
   saveState (): Promise<void>,
-  upload (nodeVersion: string, pkg: {peripheralLocation: string, id: string}): Promise<void>,
+  upload (builtPkgLocation: string, opts: {pkgId: string, nodeVersion: string}): Promise<void>,
 }
 
 export default async function (
@@ -108,13 +108,13 @@ export default async function (
     }
   }
 
-  async function upload (nodeVersion: string, pkg: {peripheralLocation: string, id: string}) {
-    const nodeMajor = nodeVersion.substring(0, nodeVersion.indexOf('.'))
-    const cachePath = path.join(store, 'side-effects-cache', nodeMajor, pkg.id)
+  async function upload (builtPkgLocation: string, opts: {pkgId: string, nodeVersion: string}) {
+    const nodeMajor = opts.nodeVersion.substring(0, opts.nodeVersion.indexOf('.'))
+    const cachePath = path.join(store, opts.pkgId, 'side_effects', nodeMajor)
     if (await fs.exists(cachePath) || await fs.exists(`${cachePath}+stage`)) {
       return
     }
-    await copyPkg(pkg.peripheralLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
+    await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
   }
 }
 
