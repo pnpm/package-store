@@ -111,9 +111,6 @@ export default async function (
   async function upload (builtPkgLocation: string, opts: {pkgId: string, nodeVersion: string}) {
     const nodeMajor = opts.nodeVersion.substring(0, opts.nodeVersion.indexOf('.'))
     const cachePath = path.join(store, opts.pkgId, 'side_effects', nodeMajor)
-    if (await fs.exists(cachePath) || await fs.exists(`${cachePath}+stage`)) {
-      return
-    }
     await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
   }
 }

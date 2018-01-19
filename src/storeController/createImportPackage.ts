@@ -9,6 +9,7 @@ import ncpCB = require('ncp')
 import pLimit = require('p-limit')
 import path = require('path')
 import exists = require('path-exists')
+import rimraf = require('rimraf-then')
 import promisify = require('util.promisify')
 import linkIndexedDir from '../fs/linkIndexedDir'
 
@@ -83,8 +84,11 @@ async function reflinkPkg (
   const pkgJsonPath = path.join(to, 'package.json')
 
   if (!opts.filesResponse.fromStore || opts.force || !await exists(pkgJsonPath)) {
-    await mkdirp(to)
-    await execFilePromise('cp', ['-r', '--reflink', from + '/.', to])
+    const staging = `${to}+stage`
+    await mkdirp(staging)
+    await rimraf(to)
+    await execFilePromise('cp', ['-r', '--reflink', from + '/.', staging])
+    await fs.rename(staging, to)
   }
 }
 
@@ -131,6 +135,7 @@ export async function copyPkg (
   if (!opts.filesResponse.fromStore || opts.force || !await exists(pkgJsonPath)) {
     const staging = `${to}+stage`
     await mkdirp(staging)
+    await rimraf(to)
     await ncp(from + '/.', staging)
     await fs.rename(staging, to)
   }
