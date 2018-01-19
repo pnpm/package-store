@@ -26,7 +26,7 @@ export interface StoreController {
   updateConnections (prefix: string, opts: {addDependencies: string[], removeDependencies: string[], prune: boolean}): Promise<void>,
   prune (): Promise<void>,
   saveState (): Promise<void>,
-  upload (builtPkgLocation: string, opts: {pkgId: string, nodeVersion: string}): Promise<void>,
+  upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string}): Promise<void>,
 }
 
 export default async function (
@@ -108,9 +108,8 @@ export default async function (
     }
   }
 
-  async function upload (builtPkgLocation: string, opts: {pkgId: string, nodeVersion: string}) {
-    const nodeMajor = opts.nodeVersion.substring(0, opts.nodeVersion.indexOf('.'))
-    const cachePath = path.join(store, opts.pkgId, 'side_effects', nodeMajor)
+  async function upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string}) {
+    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName)
     await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
   }
 }
