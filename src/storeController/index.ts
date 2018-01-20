@@ -113,16 +113,15 @@ export default async function (
 
   async function upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string, verifyStoreIntegrity: boolean}) {
     const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'cache')
-    const integrityPath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'integrity.json')
-    const filenames = await writeIntegrityFile(builtPkgLocation, integrityPath, opts)
-    logger.info(opts.pkgId + ' FILENAMES ' + filenames)
+    // TODO calculate integrity.json here
+    // const integrityPath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'integrity.json')
+    // const filenames = await writeIntegrityFile(builtPkgLocation, integrityPath, opts)
+    const filenames: string[] = []
     await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames }, force: true})
   }
 
   async function writeIntegrityFile (target: string, integrityPath: string, opts: {pkgId: string, verifyStoreIntegrity: boolean}) {
-    logger.info(opts.pkgId + ' OBTAINING packageIndex ' + target)
     const packageIndex = await dint.from(target)
-    logger.info(opts.pkgId + ' OBTAINED packageIndex')
     await mkdirp(path.dirname(integrityPath))
     if (opts.verifyStoreIntegrity) {
       const fileIntegrities = await Promise.all(
@@ -147,7 +146,8 @@ export default async function (
       // TODO: save only filename: {size}
       await writeJsonFile(integrityPath, packageIndex, {indent: null})
     }
-    return ['foo']
+    // TODO: return the filenames
+    return []
   }
 }
 
