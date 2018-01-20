@@ -6,7 +6,6 @@ import createPackageRequester, {
   ResolveFunction,
 } from '@pnpm/package-requester'
 import {StoreIndex} from '@pnpm/types'
-import dint = require('dint')
 import mkdirp = require('mkdirp-promise')
 import pFilter = require('p-filter')
 import pLimit = require('p-limit')
@@ -29,7 +28,7 @@ export interface StoreController {
   updateConnections (prefix: string, opts: {addDependencies: string[], removeDependencies: string[], prune: boolean}): Promise<void>,
   prune (): Promise<void>,
   saveState (): Promise<void>,
-  upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string, verifyStoreIntegrity: boolean}): Promise<void>,
+  upload (builtPkgLocation: string, opts: {pkgId: string, engine: string}): Promise<void>,
 }
 
 export default async function (
@@ -111,43 +110,11 @@ export default async function (
     }
   }
 
-  async function upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string, verifyStoreIntegrity: boolean}) {
-    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'package')
+  async function upload (builtPkgLocation: string, opts: {pkgId: string, engine: string}) {
+    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engine, 'package')
     // TODO calculate integrity.json here
-    // const integrityPath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'integrity.json')
-    // const filenames = await writeIntegrityFile(builtPkgLocation, integrityPath, opts)
     const filenames: string[] = []
     await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames }, force: true})
-  }
-
-  async function writeIntegrityFile (target: string, integrityPath: string, opts: {pkgId: string, verifyStoreIntegrity: boolean}) {
-    const packageIndex = await dint.from(target)
-    await mkdirp(path.dirname(integrityPath))
-    if (opts.verifyStoreIntegrity) {
-      const fileIntegrities = await Promise.all(
-        Object.keys(packageIndex)
-          .map((filename) =>
-            packageIndex[filename].generatingIntegrity
-              .then((fileIntegrity: object) => ({
-                [filename]: {
-                  integrity: fileIntegrity,
-                  size: packageIndex[filename].size,
-                },
-              })),
-          ),
-      )
-      const integrity = fileIntegrities
-        .reduce((acc, info) => {
-          Object.assign(acc, info)
-          return acc
-        }, {})
-      await writeJsonFile(integrityPath, integrity, {indent: null})
-    } else {
-      // TODO: save only filename: {size}
-      await writeJsonFile(integrityPath, packageIndex, {indent: null})
-    }
-    // TODO: return the filenames
-    return []
   }
 }
 

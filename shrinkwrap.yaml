@@ -6,7 +6,6 @@ dependencies:
   '@types/mz': 0.0.32
   '@types/node': 9.3.0
   '@types/ramda': 0.25.14
-  dint: 2.0.0
   drive-by-path: 1.0.0
   encode-registry: 1.1.0
   load-json-file: 4.0.0
@@ -2997,7 +2996,6 @@ specifiers:
   '@types/tape': ^4.2.30
   commitizen: ^2.8.6
   cz-conventional-changelog: ^2.0.0
-  dint: ^2.0.0
   drive-by-path: ^1.0.0
   encode-registry: ^1.1.0
   husky: ^0.14.3
