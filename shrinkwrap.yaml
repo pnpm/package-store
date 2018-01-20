@@ -2562,6 +2562,7 @@ packages:
   /ssri/5.0.0:
     dependencies:
       safe-buffer: 5.1.1
+    dev: false
     resolution:
       integrity: sha512-728D4yoQcQm1ooZvSbywLkV1RjfITZXh0oWrhM/lnsx3nAHx7LsRGJWB/YyvoceAYRq98xqbstiN4JBv1/wNHg==
   /ssri/5.1.0:
