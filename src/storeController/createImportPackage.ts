@@ -84,7 +84,7 @@ async function reflinkPkg (
   const pkgJsonPath = path.join(to, 'package.json')
 
   if (!opts.filesResponse.fromStore || opts.force || !await exists(pkgJsonPath)) {
-    const staging = `${to}+stage`
+    const staging = `${to}+stage${Math.random()}`
     await execFilePromise('cp', ['-r', '--reflink', from + '/.', staging])
     await renameOverwrite(staging, to)
   }
@@ -131,7 +131,7 @@ export async function copyPkg (
 ) {
   const pkgJsonPath = path.join(to, 'package.json')
   if (!opts.filesResponse.fromStore || opts.force || !await exists(pkgJsonPath)) {
-    const staging = `${to}+stage`
+    const staging = `${to}+stage${Math.random()}`
     await mkdirp(staging)
     await ncp(from + '/.', staging)
     await renameOverwrite(staging, to)
