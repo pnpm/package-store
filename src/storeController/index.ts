@@ -13,7 +13,6 @@ import path = require('path')
 import exists = require('path-exists')
 import R = require('ramda')
 import rimraf = require('rimraf-then')
-import writeJsonFile = require('write-json-file')
 
 import {
   read as readStore,
