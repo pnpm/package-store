@@ -6,6 +6,7 @@ dependencies:
   '@types/mz': 0.0.32
   '@types/node': 9.3.0
   '@types/ramda': 0.25.14
+  dint: 2.0.0
   drive-by-path: 1.0.0
   encode-registry: 1.1.0
   load-json-file: 4.0.0
@@ -672,7 +673,7 @@ packages:
       mz: 2.7.0
       p-every: 1.0.2
       p-limit: 1.2.0
-      ssri: 5.0.0
+      ssri: 5.1.0
     dev: false
     engines:
       node: '>=4'
@@ -2561,9 +2562,14 @@ packages:
   /ssri/5.0.0:
     dependencies:
       safe-buffer: 5.1.1
-    dev: false
     resolution:
       integrity: sha512-728D4yoQcQm1ooZvSbywLkV1RjfITZXh0oWrhM/lnsx3nAHx7LsRGJWB/YyvoceAYRq98xqbstiN4JBv1/wNHg==
+  /ssri/5.1.0:
+    dependencies:
+      safe-buffer: 5.1.1
+    dev: false
+    resolution:
+      integrity: sha512-TevC8fgxQKTfQ1nWtM9GNzr3q5rrHNntG9CDMH1k3QhSZI6Kb+NbjLRs8oPFZa2Hgo7zoekL+UTvoEk7tsbjQg==
   /stream-shift/1.0.0:
     dev: false
     resolution:
@@ -2991,6 +2997,7 @@ specifiers:
   '@types/tape': ^4.2.30
   commitizen: ^2.8.6
   cz-conventional-changelog: ^2.0.0
+  dint: ^2.0.0
   drive-by-path: ^1.0.0
   encode-registry: ^1.1.0
   husky: ^0.14.3

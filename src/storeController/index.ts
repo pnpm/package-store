@@ -6,13 +6,16 @@ import createPackageRequester, {
   ResolveFunction,
 } from '@pnpm/package-requester'
 import {StoreIndex} from '@pnpm/types'
-import fs = require('mz/fs')
+import dint = require('dint')
+import mkdirp = require('mkdirp-promise')
 import pFilter = require('p-filter')
 import pLimit = require('p-limit')
 import path = require('path')
 import exists = require('path-exists')
 import R = require('ramda')
 import rimraf = require('rimraf-then')
+import writeJsonFile = require('write-json-file')
+
 import {
   read as readStore,
   save as saveStore,
@@ -26,7 +29,7 @@ export interface StoreController {
   updateConnections (prefix: string, opts: {addDependencies: string[], removeDependencies: string[], prune: boolean}): Promise<void>,
   prune (): Promise<void>,
   saveState (): Promise<void>,
-  upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string}): Promise<void>,
+  upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string, verifyStoreIntegrity: boolean}): Promise<void>,
 }
 
 export default async function (
@@ -108,9 +111,43 @@ export default async function (
     }
   }
 
-  async function upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string}) {
-    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName)
-    await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames: [] }, force: true})
+  async function upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string, verifyStoreIntegrity: boolean}) {
+    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'cache')
+    const integrityPath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'integrity.json')
+    const filenames = await writeIntegrityFile(builtPkgLocation, integrityPath, opts)
+    logger.info(opts.pkgId + ' FILENAMES ' + filenames)
+    await copyPkg(builtPkgLocation, cachePath, {filesResponse: { fromStore: true, filenames }, force: true})
+  }
+
+  async function writeIntegrityFile (target: string, integrityPath: string, opts: {pkgId: string, verifyStoreIntegrity: boolean}) {
+    logger.info(opts.pkgId + ' OBTAINING packageIndex ' + target)
+    const packageIndex = await dint.from(target)
+    logger.info(opts.pkgId + ' OBTAINED packageIndex')
+    await mkdirp(path.dirname(integrityPath))
+    if (opts.verifyStoreIntegrity) {
+      const fileIntegrities = await Promise.all(
+        Object.keys(packageIndex)
+          .map((filename) =>
+            packageIndex[filename].generatingIntegrity
+              .then((fileIntegrity: object) => ({
+                [filename]: {
+                  integrity: fileIntegrity,
+                  size: packageIndex[filename].size,
+                },
+              })),
+          ),
+      )
+      const integrity = fileIntegrities
+        .reduce((acc, info) => {
+          Object.assign(acc, info)
+          return acc
+        }, {})
+      await writeJsonFile(integrityPath, integrity, {indent: null})
+    } else {
+      // TODO: save only filename: {size}
+      await writeJsonFile(integrityPath, packageIndex, {indent: null})
+    }
+    return ['foo']
   }
 }
 
