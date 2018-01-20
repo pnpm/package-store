@@ -112,7 +112,7 @@ export default async function (
   }
 
   async function upload (builtPkgLocation: string, opts: {pkgId: string, engineName: string, verifyStoreIntegrity: boolean}) {
-    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'cache')
+    const cachePath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'package')
     // TODO calculate integrity.json here
     // const integrityPath = path.join(store, opts.pkgId, 'side_effects', opts.engineName, 'integrity.json')
     // const filenames = await writeIntegrityFile(builtPkgLocation, integrityPath, opts)
