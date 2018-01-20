@@ -6,14 +6,12 @@ import createPackageRequester, {
   ResolveFunction,
 } from '@pnpm/package-requester'
 import {StoreIndex} from '@pnpm/types'
-import mkdirp = require('mkdirp-promise')
 import pFilter = require('p-filter')
 import pLimit = require('p-limit')
 import path = require('path')
 import exists = require('path-exists')
 import R = require('ramda')
 import rimraf = require('rimraf-then')
-
 import {
   read as readStore,
   save as saveStore,
