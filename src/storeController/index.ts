@@ -2,6 +2,7 @@ import lock from '@pnpm/fs-locker'
 import logger from '@pnpm/logger'
 import createPackageRequester, {
   FetchFunction,
+  PackageFilesResponse,
   RequestPackageFunction,
   ResolveFunction,
 } from '@pnpm/package-requester'
@@ -16,7 +17,7 @@ import {
   read as readStore,
   save as saveStore,
 } from '../fs/storeIndex'
-import createImportPackage, {copyPkg, ImportPackageFunction} from './createImportPackage'
+import importPackage, {copyPkg, ImportPackageFunction} from './importPackage'
 
 export interface StoreController {
   requestPackage: RequestPackageFunction,
@@ -56,7 +57,10 @@ export default async function (
 
   return {
     close: async () => { await unlock() },
-    importPackage: createImportPackage(initOpts.packageImportMethod),
+    importPackage: async (from: string, to: string, opts: { filesResponse: PackageFilesResponse, force: boolean, packageImportMethod?: 'auto' | 'hardlink' | 'copy' | 'reflink' }) => {
+      opts.packageImportMethod = opts.packageImportMethod || initOpts.packageImportMethod
+      return importPackage(from, to, opts)
+    },
     prune,
     requestPackage,
     saveState,
