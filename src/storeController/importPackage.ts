@@ -23,15 +23,25 @@ export type ImportPackageFunction = (
   opts: {
     filesResponse: PackageFilesResponse,
     force: boolean,
+    packageImportMethod?: 'auto' | 'hardlink' | 'copy' | 'reflink',
   },
 ) => Promise<void>
 
-export default (packageImportMethod?: 'auto' | 'hardlink' | 'copy' | 'reflink'): ImportPackageFunction => {
-  const importPackage = createImportPackage(packageImportMethod)
-  return (filesResponse, dependency, opts) => limitLinking(() => importPackage(filesResponse, dependency, opts))
+const IMPORT_PACKAGE_FUNCTIONS = {}
+
+export default (from: string, to: string, opts: {
+  filesResponse: PackageFilesResponse,
+  force: boolean,
+  packageImportMethod?: 'auto' | 'hardlink' | 'copy' | 'reflink',
+}): Promise<void> => {
+  const packageImportMethod = opts.packageImportMethod || 'auto'
+  if (!IMPORT_PACKAGE_FUNCTIONS[packageImportMethod]) {
+    IMPORT_PACKAGE_FUNCTIONS[packageImportMethod] = createImportPackage(packageImportMethod)
+  }
+  return limitLinking(() => IMPORT_PACKAGE_FUNCTIONS[packageImportMethod](from, to, opts))
 }
 
-function createImportPackage (packageImportMethod?: 'auto' | 'hardlink' | 'copy' | 'reflink') {
+function createImportPackage (packageImportMethod: 'auto' | 'hardlink' | 'copy' | 'reflink') {
   let fallbackToCopying = false
 
   // this works in the following way:
@@ -39,7 +49,7 @@ function createImportPackage (packageImportMethod?: 'auto' | 'hardlink' | 'copy'
   // - reflink: reflink the packages, no fallback
   // - auto: try to hardlink the packages, if it fails, fallback to copy
   // - copy: copy the packages, do not try to link them first
-  switch (packageImportMethod || 'auto') {
+  switch (packageImportMethod) {
     case 'reflink':
       return reflinkPkg
     case 'hardlink':
