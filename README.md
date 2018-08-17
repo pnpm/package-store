@@ -1,3 +1,5 @@
+> This package has been moved to the [pnpm](https://github.com/pnpm/pnpm) multi-package repository.
+
 # package-store
 
 [![Status](https://travis-ci.org/pnpm/package-store.svg?branch=master)](https://travis-ci.org/pnpm/package-store "See test builds")
